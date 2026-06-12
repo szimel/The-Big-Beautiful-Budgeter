@@ -44,6 +44,147 @@ def get_year_palette(year: int, ordered_years: list[int]) -> dict[str, str]:
     return YEAR_PALETTES[index % len(YEAR_PALETTES)]
 
 
+def aggregate_year_rows(months: list[dict], person_key: str | None = None) -> tuple[list[dict], dict, dict[str, float]]:
+    category_order: list[str] = []
+    category_stats: dict[str, dict[str, float]] = {}
+    total_transactions = 0
+    total_amount = 0.0
+    total_points = 0
+    month_count = max(1, len(months))
+
+    for month in months:
+        if person_key is None:
+            rows = month.get("rows", [])
+            totals = month.get("totals", {})
+        else:
+            person_block = month.get("by_person", {}).get(person_key, {})
+            rows = person_block.get("rows", [])
+            totals = person_block.get("totals", {})
+
+        total_transactions += int(totals.get("transactions", 0) or 0)
+        total_amount += float(totals.get("total_amount", 0.0) or 0.0)
+        total_points += int(totals.get("points", 0) or 0)
+
+        for item in rows:
+            category = item.get("category", "")
+            if category not in category_stats:
+                category_stats[category] = {"transactions": 0, "total_amount": 0.0}
+                category_order.append(category)
+            category_stats[category]["transactions"] += int(item.get("transactions", 0) or 0)
+            category_stats[category]["total_amount"] += float(item.get("total_amount", 0.0) or 0.0)
+
+    out_rows = []
+    avg_map: dict[str, float] = {}
+    for category in category_order:
+        row_total = category_stats[category]["total_amount"]
+        row_avg = row_total / month_count
+        avg_map[category] = row_avg
+        out_rows.append(
+            {
+                "category": category,
+                "transactions": int(category_stats[category]["transactions"]),
+                "total_amount": row_total,
+                "average_amount": row_avg,
+            }
+        )
+
+    totals = {
+        "transactions": total_transactions,
+        "total_amount": total_amount,
+        "points": total_points,
+        "average_amount": total_amount / month_count,
+    }
+    return out_rows, totals, avg_map
+
+
+def with_yearly_deviation(rows: list[dict], yearly_avg_map: dict[str, float]) -> list[dict]:
+    output = []
+    for item in rows:
+        category = item.get("category", "")
+        amount = float(item.get("total_amount", 0.0) or 0.0)
+        avg = float(yearly_avg_map.get(category, 0.0))
+        output.append(
+            {
+                "category": category,
+                "transactions": int(item.get("transactions", 0) or 0),
+                "total_amount": amount,
+                "average_amount": avg,
+                "deviation": amount - avg,
+            }
+        )
+    return output
+
+
+def write_summary_table_block(
+    worksheet,
+    start_row: int,
+    start_col: int,
+    title: str,
+    rows: list[dict],
+    palette: dict[str, str],
+    thin_border,
+    totals: dict | None = None,
+    include_deviation: bool = False,
+) -> int:
+    headers = ["Category", "Transactions", "Total Amount", "Average"]
+    if include_deviation:
+        headers.append("Deviation")
+    end_col = start_col + len(headers) - 1
+
+    worksheet.merge_cells(start_row=start_row, start_column=start_col, end_row=start_row, end_column=end_col)
+    subheader = worksheet.cell(row=start_row, column=start_col)
+    subheader.value = title
+    subheader.font = Font(bold=True, color="1F4E78")
+    subheader.fill = PatternFill("solid", fgColor=palette["month"])
+    subheader.alignment = Alignment(horizontal="left")
+
+    for offset, header in enumerate(headers):
+        header_cell = worksheet.cell(row=start_row + 1, column=start_col + offset, value=header)
+        apply_header_style(header_cell)
+
+    cursor = start_row + 2
+    for item in rows:
+        worksheet.cell(row=cursor, column=start_col, value=item.get("category", ""))
+        worksheet.cell(row=cursor, column=start_col + 1, value=item.get("transactions", 0))
+        amount_cell = worksheet.cell(row=cursor, column=start_col + 2, value=item.get("total_amount", 0.0))
+        set_currency(amount_cell)
+        avg_cell = worksheet.cell(row=cursor, column=start_col + 3, value=item.get("average_amount", 0.0))
+        set_currency(avg_cell)
+
+        if include_deviation:
+            deviation = float(item.get("deviation", 0.0) or 0.0)
+            deviation_cell = worksheet.cell(row=cursor, column=start_col + 4, value=deviation)
+            set_currency(deviation_cell)
+            if deviation > 0:
+                deviation_cell.fill = PatternFill("solid", fgColor="F4CCCC")
+            elif deviation < 0:
+                deviation_cell.fill = PatternFill("solid", fgColor="D9EAD3")
+        cursor += 1
+
+    if totals is not None:
+        total_label = worksheet.cell(row=cursor, column=start_col, value="Total")
+        total_label.font = Font(bold=True, color="1F4E78")
+        tx_cell = worksheet.cell(row=cursor, column=start_col + 1, value=totals.get("transactions", 0))
+        tx_cell.font = Font(bold=True)
+        total_amount_cell = worksheet.cell(row=cursor, column=start_col + 2, value=totals.get("total_amount", 0.0))
+        total_amount_cell.font = Font(bold=True)
+        set_currency(total_amount_cell)
+        total_avg_cell = worksheet.cell(row=cursor, column=start_col + 3, value=totals.get("average_amount", 0.0))
+        total_avg_cell.font = Font(bold=True)
+        set_currency(total_avg_cell)
+        if include_deviation:
+            worksheet.cell(row=cursor, column=start_col + 4, value="")
+        cursor += 1
+
+    for block_row in range(start_row + 1, cursor):
+        for block_col in range(start_col, end_col + 1):
+            worksheet.cell(row=block_row, column=block_col).border = Border(
+                left=thin_border, right=thin_border, top=thin_border, bottom=thin_border
+            )
+
+    return cursor
+
+
 def write_summary_sheet(worksheet, summary_data: list[dict]) -> None:
     worksheet.title = "Summary"
     worksheet["A1"] = "MULTI-YEAR SUMMARY"
@@ -56,56 +197,89 @@ def write_summary_sheet(worksheet, summary_data: list[dict]) -> None:
 
     ordered_years = [item.get("year", 0) for item in summary_data]
 
-    for year_index, year_block in enumerate(summary_data):
+    for year_block in summary_data:
         year = year_block.get("year", 0)
         palette = get_year_palette(year, ordered_years)
         months = year_block.get("months", [])
-        month_block_width = 4
-        month_block_data_rows = max((len(month.get("rows", [])) for month in months), default=1)
-        section_height = 3 + month_block_data_rows
-        last_col = max(1, len(months) * month_block_width)
 
-        year_total_transactions = 0
-        year_total_amount = 0.0
-        for month in months:
-            for item in month.get("rows", []):
-                if item.get("category") == "Uncategorized":
-                    continue
-                year_total_transactions += int(item.get("transactions", 0))
-                year_total_amount += float(item.get("total_amount", 0.0))
+        year_rows_all, year_totals_all, year_avg_all = aggregate_year_rows(months, None)
+        year_rows_sam, year_totals_sam, year_avg_sam = aggregate_year_rows(months, "Samuel")
+        year_rows_kam, year_totals_kam, year_avg_kam = aggregate_year_rows(months, "Kamrie")
 
-        worksheet.merge_cells(start_row=row, start_column=1, end_row=row, end_column=last_col)
+        month_table_width = 5
+        month_block_span = 6
+        months_start_col = 7
+        year_table_start_col = 1
+        last_month_col = months_start_col + (max(0, len(months) - 1) * month_block_span) + (month_table_width - 1)
+        banner_end_col = max(year_table_start_col + 4, last_month_col)
+
+        worksheet.merge_cells(start_row=row, start_column=1, end_row=row, end_column=banner_end_col)
         year_cell = worksheet.cell(row=row, column=1)
         year_cell.value = f"YEAR {year}"
         year_cell.font = Font(size=14, bold=True, color="FFFFFF")
         year_cell.fill = PatternFill("solid", fgColor=palette["banner"])
         year_cell.alignment = Alignment(horizontal="left")
 
-        totals_start_col = last_col + 2
-        worksheet.merge_cells(start_row=row, start_column=totals_start_col, end_row=row, end_column=totals_start_col + 2)
-        totals_banner = worksheet.cell(row=row, column=totals_start_col)
+        worksheet.merge_cells(start_row=row + 1, start_column=year_table_start_col, end_row=row + 1, end_column=year_table_start_col + 3)
+        totals_banner = worksheet.cell(row=row + 1, column=year_table_start_col)
         totals_banner.value = "YEAR TOTALS"
         totals_banner.font = Font(size=12, bold=True, color="FFFFFF")
         totals_banner.fill = PatternFill("solid", fgColor=palette["banner"])
         totals_banner.alignment = Alignment(horizontal="center")
 
-        totals_rows = [
-            ("Months", len(months), False),
-            ("Transactions", year_total_transactions, False),
-            ("Total Amount", year_total_amount, True),
+        stats_rows = [
+            ("Months", len(months)),
+            ("Points", year_totals_all.get("points", 0)),
+            ("Samuel Points", year_totals_sam.get("points", 0)),
+            ("Kamrie Points", year_totals_kam.get("points", 0)),
         ]
-        for offset, (label, value, is_currency) in enumerate(totals_rows, start=1):
-            label_cell = worksheet.cell(row=row + offset, column=totals_start_col, value=label)
+        for offset, (label, value) in enumerate(stats_rows, start=1):
+            label_cell = worksheet.cell(row=row + 1 + offset, column=year_table_start_col, value=label)
             label_cell.font = Font(bold=True, color="1F4E78")
             label_cell.fill = PatternFill("solid", fgColor=palette["card"])
-            value_cell = worksheet.cell(row=row + offset, column=totals_start_col + 1, value=value)
+            value_cell = worksheet.cell(row=row + 1 + offset, column=year_table_start_col + 1, value=value)
             value_cell.fill = PatternFill("solid", fgColor=palette["card"])
-            if is_currency:
-                set_currency(value_cell)
+
+        year_cursor = row + 6
+        year_cursor = write_summary_table_block(
+            worksheet,
+            start_row=year_cursor,
+            start_col=year_table_start_col,
+            title="TOTAL (SAMUEL + KAMRIE)",
+            rows=year_rows_all,
+            palette=palette,
+            thin_border=thin,
+            totals=year_totals_all,
+            include_deviation=False,
+        )
+        year_cursor = write_summary_table_block(
+            worksheet,
+            start_row=year_cursor,
+            start_col=year_table_start_col,
+            title="SAMUEL",
+            rows=year_rows_sam,
+            palette=palette,
+            thin_border=thin,
+            totals=year_totals_sam,
+            include_deviation=False,
+        )
+        year_cursor = write_summary_table_block(
+            worksheet,
+            start_row=year_cursor,
+            start_col=year_table_start_col,
+            title="KAMRIE",
+            rows=year_rows_kam,
+            palette=palette,
+            thin_border=thin,
+            totals=year_totals_kam,
+            include_deviation=False,
+        )
+
+        max_end = year_cursor
 
         for month_index, month_block in enumerate(months):
-            start_col = 1 + month_index * month_block_width
-            end_col = start_col + 2
+            start_col = months_start_col + month_index * month_block_span
+            end_col = start_col + month_table_width - 1
 
             worksheet.merge_cells(start_row=row + 1, start_column=start_col, end_row=row + 1, end_column=end_col)
             month_cell = worksheet.cell(row=row + 1, column=start_col)
@@ -114,27 +288,49 @@ def write_summary_sheet(worksheet, summary_data: list[dict]) -> None:
             month_cell.fill = PatternFill("solid", fgColor=palette["month"])
             month_cell.alignment = Alignment(horizontal="center")
 
-            headers = ["Category", "Transactions", "Total Amount"]
-            for offset, header in enumerate(headers):
-                header_cell = worksheet.cell(row=row + 2, column=start_col + offset)
-                header_cell.value = header
-                apply_header_style(header_cell)
+            all_rows = with_yearly_deviation(month_block.get("rows", []), year_avg_all)
+            sam_rows = with_yearly_deviation(month_block.get("by_person", {}).get("Samuel", {}).get("rows", []), year_avg_sam)
+            kam_rows = with_yearly_deviation(month_block.get("by_person", {}).get("Kamrie", {}).get("rows", []), year_avg_kam)
 
-            data_rows = month_block.get("rows", [])
-            for data_index, item in enumerate(data_rows):
-                data_row = row + 3 + data_index
-                worksheet.cell(row=data_row, column=start_col, value=item.get("category", ""))
-                worksheet.cell(row=data_row, column=start_col + 1, value=item.get("transactions", 0))
-                amount_cell = worksheet.cell(row=data_row, column=start_col + 2, value=item.get("total_amount", 0.0))
-                set_currency(amount_cell)
+            cursor = row + 2
+            cursor = write_summary_table_block(
+                worksheet,
+                start_row=cursor,
+                start_col=start_col,
+                title="TOTAL (SAMUEL + KAMRIE)",
+                rows=all_rows,
+                palette=palette,
+                thin_border=thin,
+                totals=month_block.get("totals", {}),
+                include_deviation=True,
+            )
+            cursor = write_summary_table_block(
+                worksheet,
+                start_row=cursor,
+                start_col=start_col,
+                title="SAMUEL",
+                rows=sam_rows,
+                palette=palette,
+                thin_border=thin,
+                totals=month_block.get("by_person", {}).get("Samuel", {}).get("totals", {}),
+                include_deviation=True,
+            )
+            cursor = write_summary_table_block(
+                worksheet,
+                start_row=cursor,
+                start_col=start_col,
+                title="KAMRIE",
+                rows=kam_rows,
+                palette=palette,
+                thin_border=thin,
+                totals=month_block.get("by_person", {}).get("Kamrie", {}).get("totals", {}),
+                include_deviation=True,
+            )
 
-            for block_row in range(row + 2, row + 3 + max(1, month_block_data_rows)):
-                for block_col in range(start_col, end_col + 1):
-                    worksheet.cell(row=block_row, column=block_col).border = Border(
-                        left=thin, right=thin, top=thin, bottom=thin
-                    )
+            if cursor > max_end:
+                max_end = cursor
 
-        row += section_height + 2
+        row = max_end + 2
 
     auto_fit_columns(worksheet)
 
@@ -161,7 +357,7 @@ def write_uncategorized_top_companies(worksheet, sections: list[dict]) -> None:
             amount_by_name[name] += float(tx.get("amount", 0.0))
 
     top_items = counter.most_common(10)
-    start_col = 6
+    start_col = 8
 
     worksheet.merge_cells(start_row=4, start_column=start_col, end_row=4, end_column=start_col + 2)
     title = worksheet.cell(row=4, column=start_col)
@@ -202,7 +398,7 @@ def write_ledger_sheet(worksheet, sheet_name: str, sections: list[dict]) -> None
         totals = section.get("totals", {})
         section_transactions = section.get("transactions", [])
 
-        worksheet.merge_cells(start_row=row, start_column=1, end_row=row, end_column=4)
+        worksheet.merge_cells(start_row=row, start_column=1, end_row=row, end_column=6)
         header_cell = worksheet.cell(row=row, column=1)
         header_cell.value = label
         header_cell.font = Font(size=13, bold=True, color="FFFFFF")
@@ -219,23 +415,26 @@ def write_ledger_sheet(worksheet, sheet_name: str, sections: list[dict]) -> None
             metric_cell = worksheet.cell(row=row + 1, column=col)
             metric_cell.font = Font(bold=True, color="1F4E78")
 
-        headers = ["Description", "Amount", "All Matched Categories"]
+        headers = ["Date", "Description", "Purchased By", "Points", "Amount", "All Matched Categories"]
         for col, text in enumerate(headers, start=1):
             header = worksheet.cell(row=row + 3, column=col, value=text)
             apply_header_style(header)
 
         data_row = row + 4
         if not section_transactions:
-            worksheet.cell(row=data_row, column=1, value="(No transactions)")
-            worksheet.cell(row=data_row, column=2, value=0.0)
-            set_currency(worksheet.cell(row=data_row, column=2))
+            worksheet.cell(row=data_row, column=2, value="(No transactions)")
+            worksheet.cell(row=data_row, column=5, value=0.0)
+            set_currency(worksheet.cell(row=data_row, column=5))
             data_row += 1
         else:
             for tx in section_transactions:
-                worksheet.cell(row=data_row, column=1, value=tx.get("description", ""))
-                amount = worksheet.cell(row=data_row, column=2, value=tx.get("amount", 0.0))
+                worksheet.cell(row=data_row, column=1, value=tx.get("Date", ""))
+                worksheet.cell(row=data_row, column=2, value=tx.get("description", ""))
+                worksheet.cell(row=data_row, column=3, value=tx.get("Purchased By", ""))
+                worksheet.cell(row=data_row, column=4, value=tx.get("Points", 0))
+                amount = worksheet.cell(row=data_row, column=5, value=tx.get("amount", 0.0))
                 set_currency(amount)
-                worksheet.cell(row=data_row, column=3, value=", ".join(tx.get("categories", [])))
+                worksheet.cell(row=data_row, column=6, value=", ".join(tx.get("categories", [])))
                 data_row += 1
 
         row = data_row + 2

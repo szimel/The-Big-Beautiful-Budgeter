@@ -2,7 +2,6 @@
 	"Resturants": [
 		"CHICK-FIL-A",
 		"JERSEY MIKES",
-		"BJS RESTAURANTS",
 		"MCDONALD",
 		"SONIC",
 		"TST*",
@@ -15,11 +14,46 @@
 		"DOMINO",
 		"OLIVE GARDEN",
 		"SHIPLEY",
-		"BAHAMA BUCKS"
+		"Bahama Buck's",
+		"Dairy Queen",
+		"CHUY'S",
+		"Panda Express",
+		"CABO BOB'S",
+		"ROSA'S CAFE",
+		"CHIPOTLE",
+		"JERSEY MIKE'S SUBS",
+		"Zeds Ice Cream",
+		" ABA ",
+		"Andy's Frozen Custard",
+		"Antonelli's ",
+		"Donut",
+		"Ice Cream",
+		"Bold Republic Brew",
+		"BJ's",
+		"Pizza",
+		"Salsa Limon",
+		"Crumbl",
+		"Burger King",
+		"Krispy Kreme",
+		"Chick Fil A",
+		"Firehouse Subs",
+		"In-N-Out",
+		"Raising Cane's",
+		"Texas Roadhouse",
+		"Nothing Bundt Cakes",
+		"Snow Cones",
+		"Bush's Chicken",
+		"Snooze, An A.M. Eatery",
+		"Velvet Taco",
+		"Los Compadres Street Tacos",
+		"HIGH FLYING FOODS",
+		"Din Tai Fung",
+		"TREETOPS CANTEEN",
+		"Sabertooth Grill"
 	],
 	"Groceries": [
-		"H-E-B #",
-		"WHOLEFDS",
+		"H-E-B",
+		"Whole Foods",
 		"CENTRAL MARKET",
 		"TRADER JOE"
 	],
@@ -27,16 +61,27 @@
 		"EXXON",
 		"SHELL",
 		"CHEVRON",
-		"7-ELEVEN",
+		"7 ELEVEN",
 		"BUC-EE'S",
-		"H-E-B GAS",
+		"HEB",
 		"LIBERTY MARTS",
 		"LOVE'S",
 		"QT",
 		"CIRCLE K",
-		"CEFCO"
+		"CEFCO",
+		"Sunoco",
+		"Conoco"
 	],
-	"fun money": [],
+	"Car": [
+		"Parking",
+		"PSPT Austin PRK",
+		"Austin's Automotive Specialists",
+		"Jiffy Lube",
+		"Today's Carwash",
+		"Car wash",
+		"Take 5 Oil Change",
+		"Autozone"
+	],
 	"Drinkies": [
 		"ATRIUM COFFEE",
 		"EPOCH COFFEE",
@@ -45,34 +90,54 @@
 		"CHERRY COFFEE",
 		"HOUNDSTOOTH",
 		"AMPERSAND",
-		"HTEO",
+		"HTEAO",
 		"COFFEE",
-		"SWIG"
+		"SWIG",
+		"Coca-Cola",
+		"Starbucks",
+		"SIGMA SWIM",
+		"Teapioca",
+		"Merit",
+		"Sip City"
 	],
 	"Subscriptions": [
 		"SPOTIFY",
 		"GIT",
 		"COVENANT EYES",
-		"RAILWAY RAILWAY",
-		"GOLD ANNUAL"
+		"RAILWAY",
+		"GOLD ANNUAL",
+		"Public Storage",
+		"OPPOSE GRAVITY PERFORM",
+		"JUNGLE",
+		"Virtual Vocations",
+		"Atg USA"
 	],
 	"Medical": [
 		"MDLIVE",
 		"PHARMACY",
-		"WALGREENS"
+		"WALGREENS",
+		"CVS",
+		"VMD PRIMARY",
+		"Health Center"
 	],
 	"Expenses": [
 		"LEMONADE",
-		"PROGRESSIVE"
+		"PROGRESSIVE",
+		"SOCIETY OF ACTUARIES",
+		"COACHING ACTUARIES",
+		"UNT STUDENT ACCOUNTING",
+		"The Infinite Actuary",
+		"Dallas College"
 	],
 	"Shopping": [
 		"AMAZON",
 		"TARGET",
 		"WALMART",
 		"WAL-MART",
-		"LOWES",
+		"LOWE'S",
 		"HOME DEPOT",
-		"BESTBUY",
+		"Office Depot",
+		"BEST BUY",
 		"WM SUPERCENTER",
 		"NIKE",
 		"LULULEMON",
@@ -80,7 +145,18 @@
 		"MARSHALL",
 		"SEPHORA",
 		"BATH AND BODY WORKS",
-		"DOLLAR GENERAL"
+		"DOLLAR GENERAL",
+		"BATH & BODY WORKS",
+		"ULTA",
+		"Gorjana",
+		"AliExpress",
+		"IKEA",
+		"Crate & Barrel",
+		"Abercrombie & Fitch",
+		"Adafruit Electronics",
+		"Micro Center",
+		"Casio America",
+		"TJ Maxx"
 	],
 	"Travel": [
 		"SOUTHWES",
@@ -88,9 +164,14 @@
 		"DELTA",
 		"UBER",
 		"LYFT",
-		"AUSTIN AIRPORT"
+		"AUSTIN AIRPORT",
+		"American Airlines"
 	],
 	"Entertainment": [
-		"CINEMARK"
+		"CINEMARK",
+		"AMC",
+		"Holey Moley",
+		"Cidercade",
+		" Spa"
 	]
 }
