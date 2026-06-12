@@ -1,3 +1,6 @@
 /statements
-/venv
+/.venv
+/__pycache__
 pyvenv.cfg
+/json/processed_statements.json
+statement_report.xlsx

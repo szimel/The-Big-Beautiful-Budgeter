@@ -1,0 +1,96 @@
+{
+	"Resturants": [
+		"CHICK-FIL-A",
+		"JERSEY MIKES",
+		"BJS RESTAURANTS",
+		"MCDONALD",
+		"SONIC",
+		"TST*",
+		"PIE TAP",
+		"HEIM BBQ",
+		"LORO",
+		"TACO BELL",
+		"SCHLOTZSKYS",
+		"WINGSTOP",
+		"DOMINO",
+		"OLIVE GARDEN",
+		"SHIPLEY",
+		"BAHAMA BUCKS"
+	],
+	"Groceries": [
+		"H-E-B #",
+		"WHOLEFDS",
+		"CENTRAL MARKET",
+		"TRADER JOE"
+	],
+	"Gas": [
+		"EXXON",
+		"SHELL",
+		"CHEVRON",
+		"7-ELEVEN",
+		"BUC-EE'S",
+		"H-E-B GAS",
+		"LIBERTY MARTS",
+		"LOVE'S",
+		"QT",
+		"CIRCLE K",
+		"CEFCO"
+	],
+	"fun money": [],
+	"Drinkies": [
+		"ATRIUM COFFEE",
+		"EPOCH COFFEE",
+		"HOMETOWN COFFEE",
+		"MERIT COFFEE",
+		"CHERRY COFFEE",
+		"HOUNDSTOOTH",
+		"AMPERSAND",
+		"HTEO",
+		"COFFEE",
+		"SWIG"
+	],
+	"Subscriptions": [
+		"SPOTIFY",
+		"GIT",
+		"COVENANT EYES",
+		"RAILWAY RAILWAY",
+		"GOLD ANNUAL"
+	],
+	"Medical": [
+		"MDLIVE",
+		"PHARMACY",
+		"WALGREENS"
+	],
+	"Expenses": [
+		"LEMONADE",
+		"PROGRESSIVE"
+	],
+	"Shopping": [
+		"AMAZON",
+		"TARGET",
+		"WALMART",
+		"WAL-MART",
+		"LOWES",
+		"HOME DEPOT",
+		"BESTBUY",
+		"WM SUPERCENTER",
+		"NIKE",
+		"LULULEMON",
+		"FIGS",
+		"MARSHALL",
+		"SEPHORA",
+		"BATH AND BODY WORKS",
+		"DOLLAR GENERAL"
+	],
+	"Travel": [
+		"SOUTHWES",
+		"HYATT",
+		"DELTA",
+		"UBER",
+		"LYFT",
+		"AUSTIN AIRPORT"
+	],
+	"Entertainment": [
+		"CINEMARK"
+	]
+}
