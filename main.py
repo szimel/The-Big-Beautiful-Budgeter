@@ -7,6 +7,7 @@ from pathlib import Path
 from datetime import UTC, datetime
 
 from excel_exporter import export_sheet_data_to_excel
+from personal_budget import run_personal_budget_pipeline
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -14,6 +15,9 @@ CATEGORIES_FILE = str(BASE_DIR / "json" / "categories.json")
 OUTPUT_EXCEL_FILE = str(BASE_DIR / "statement_report.xlsx")
 PROCESSING_STATE_FILE = str(BASE_DIR / "json" / "processed_statements.json")
 STATEMENTS_FOLDER = str(BASE_DIR / "statements")
+PERSONAL_BUDGET_CATEGORIES_FILE = BASE_DIR / "json" / "personal_budget_categories.json"
+PERSONAL_BUDGET_ASSIGNMENTS_FILE = BASE_DIR / "json" / "personal_budget_assignments.json"
+PERSONAL_BUDGET_OUTPUT_EXCEL_FILE = BASE_DIR / "personal_budget_report.xlsx"
 
 
 def parse_csv_date(date_value: str) -> datetime:
@@ -504,6 +508,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Force reprocess all CSV files using current categories and rebuild all sheets/state from scratch.",
     )
+    parser.add_argument(
+        "--personal-budget-rebuild",
+        action="store_true",
+        help="Clear personal budget assignment decisions and rebuild from Tkinter categorization UI.",
+    )
     return parser.parse_args()
 
 
@@ -588,9 +597,35 @@ if __name__ == "__main__":
     save_processing_state(PROCESSING_STATE_FILE, state)
 
     export_sheet_data_to_excel(state["sheets"], list(categories.keys()), OUTPUT_EXCEL_FILE)
+
+    personal_budget_result = run_personal_budget_pipeline(
+        statements_folder=Path(STATEMENTS_FOLDER),
+        categories_file=PERSONAL_BUDGET_CATEGORIES_FILE,
+        assignments_file=PERSONAL_BUDGET_ASSIGNMENTS_FILE,
+        output_excel_file=PERSONAL_BUDGET_OUTPUT_EXCEL_FILE,
+        launch_ui_for_new=True,
+        rebuild=args.personal_budget_rebuild,
+    )
+
     print(
         "Export complete: "
         f"mode={run_mode} | "
         f"{OUTPUT_EXCEL_FILE} | New files processed: {len(new_statement_files)} | "
         f"Total statements tracked: {len(state['processed_files'])}"
     )
+    print(
+        "Personal budget export complete: "
+        f"{PERSONAL_BUDGET_OUTPUT_EXCEL_FILE} | "
+        f"Transactions found (June 2026+): {personal_budget_result.transactions_found} | "
+        f"Pending before UI: {personal_budget_result.pending_before_ui} | "
+        f"Categorized in UI: {personal_budget_result.categorized_in_ui} | "
+        f"UI launched: {personal_budget_result.ui_launched} | "
+        f"UI available: {personal_budget_result.ui_available} | "
+        f"Total tracked June 2026+: {personal_budget_result.total_transactions}"
+    )
+
+    if personal_budget_result.pending_before_ui and not personal_budget_result.ui_launched:
+        print(
+            "Personal budget warning: pending uncategorized purchases exist but Tkinter UI did not launch. "
+            "If running in a headless or non-GUI Python environment, install/use a Python build with tkinter support."
+        )

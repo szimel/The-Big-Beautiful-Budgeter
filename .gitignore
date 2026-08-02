@@ -3,4 +3,9 @@
 /__pycache__
 pyvenv.cfg
 /json/processed_statements.json
+/json/personal_budget_assignments.json
+/json/personal_budget_categories.json
 statement_report.xlsx
+personal_budget_report.xlsx
+/budget
+
